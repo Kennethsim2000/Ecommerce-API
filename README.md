@@ -89,16 +89,27 @@ This section details the available API endpoints for managing customers in the e
 - **Response:**
     - **Success (200 OK):** Returns a `CustomerVo` object containing the customer's information along with a list of `orderIds`.
 
-#### 3. **Delete Customer** (TO be added)
+#### 3. **Delete Customer** 
 
-- **Endpoint:** `api/customer`
-- **Method:** `POST`
-- **Request Body:**
-
-- **Description:** Creates a new customer by accepting the customer's `Name`, `Password`, and `Address` in the request body.
+- **Endpoint:** `api/customer?customerId=6`
+- **Method:** `DELETE`
+- **Description:** Deletes a customer based on `customerId`. It also deletes all orders placed by that customer.
+- **Query Parameters:**
+  - `customerId` (Long): The unique identifier of the customer.
 - **Response:**
-    - **Success (200 OK):** Returns a `CustomerVo` object containing the customer's information along with a list of `orderIds`.
+    - **Success (200 OK):** Returns a `Long` object representing the customerId of the customer deleted.
     - **Failure (404 Not Found):** Returns a failure message if the customer does not exist.
+
+#### 4. **Get all orders** 
+
+- **Endpoint:** `api/customer/orders?customerId=9`
+- **Method:** `GET`
+- **Description:** Gets all orders of a customer based on `customerId`. 
+- **Query Parameters:**
+  - `customerId` (Long): The unique identifier of the customer.
+- **Response:**
+  - **Success (200 OK):** Returns a `Set<Order>` object representing all the orders placed by this customer.
+  - **Failure (404 Not Found):** Returns a failure message if the customer does not exist.
 
 ### Product Controller
 
@@ -119,7 +130,55 @@ This section details the available API endpoints for managing customers in the e
 - **Description:** Retrieves the details of all prodects.
 - **Response:**
     - **Success (200 OK):** Returns a list of `ProductVo` object containing all the products in the database
-  
+
+#### 3. **Add a product**
+
+- **Endpoint:** `api/product`
+- **Method:** `POST`
+- **Request Body:**
+```json
+{
+  "name": "Slytherin cup",
+  "description": "cup belonging to the house Slytherin in harry potter",
+  "price": 20,
+  "storeName": "store D"
+}
+```
+- **Description:** Adds a new product to the database.
+- **Response:**
+  - **Success (200 OK):** Returns the `ProductVo` object containing the product just added in the database
+
+### Order Controller
+
+#### 1. **Add Order**
+
+- **Endpoint:** `api/order`
+- **Method:** `POST`
+- **Request Body:**
+```json
+{
+  "customerId": 6,
+  "productId": 6
+}
+```
+- **Description:** Adds a new order to the database.
+- **Response:**
+  - **Success (200 OK):** Returns a `OrderVo` object containing the order's information.
+  - **Failure (404 NOT FOUND):** Returns a failure message if the productId or customerId does not exist.
+
+#### 2. **Delete Order**
+
+- **Endpoint:** `api/order?orderId=12`
+- **Method:** `DELETE`
+- **Description:** Deletes a product from the database based on their unique `orderId`.
+  - `orderId` (Long): The unique identifier of the order.
+- **Response:**
+  - **Success (200 OK):** Returns a `OrderVo` object containing the order's information.
+  - **Failure (404 NOT FOUND):** Returns a failure message if the orderId does not exist.
+
+Things to do:  error handling,
+delete product.
+
 ## Tech Stack
 
 - **Backend Framework:** Spring Boot

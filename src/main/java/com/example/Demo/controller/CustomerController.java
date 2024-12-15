@@ -21,6 +21,7 @@ import com.example.Demo.dto.CustomerDto;
 import com.example.Demo.model.Customer;
 import com.example.Demo.model.Order;
 import com.example.Demo.service.CustomerService;
+import com.example.Demo.service.OrderService;
 import com.example.Demo.vo.CustomerVo;
 
 @RestController // RestController automatically serializes response body into json/xml
@@ -28,11 +29,14 @@ import com.example.Demo.vo.CustomerVo;
 public class CustomerController {
 
     @Autowired
-    CustomerService service;
+    CustomerService customerService;
+
+    @Autowired
+    OrderService orderService;
 
     @GetMapping
     public ResponseEntity<CommonResult<CustomerVo>> getCustomer(@RequestParam Long customerId) {
-        Customer customer = service.findById(customerId);
+        Customer customer = customerService.findById(customerId);
         if(customer == null) {
             CommonResult<CustomerVo> res = CommonResult.fail("Customer does not exist");
             return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
@@ -50,30 +54,44 @@ public class CustomerController {
     }
 
     @PostMapping
-    public CommonResult<CustomerVo> addCustomer(@RequestBody CustomerDto customerDto) {
+    public ResponseEntity<CommonResult<CustomerVo>> addCustomer(@RequestBody CustomerDto customerDto) {
         Customer newCustomer = new Customer();
         BeanUtils.copyProperties(customerDto, newCustomer);
-        Customer addedCustomer = service.saveCustomer(newCustomer);
+        Customer addedCustomer = customerService.saveCustomer(newCustomer);
         CustomerVo customerVo = new CustomerVo();
         BeanUtils.copyProperties(addedCustomer, customerVo);
-        return CommonResult.success(customerVo, "Customer successfully added");
+        CommonResult<CustomerVo> res = CommonResult.success(customerVo, "Customer successfully added");
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
-    @PutMapping
-    public CommonResult<CustomerVo> editCustomer(@RequestBody CustomerDto customerDto) {
-        Customer editedCustomer = new Customer();
-        BeanUtils.copyProperties(customerDto, editedCustomer);
-        Customer customer = service.updateCustomer(editedCustomer);
-        CustomerVo customerVo = new CustomerVo();
-        BeanUtils.copyProperties(customer, customerVo);
-        return CommonResult.success(customerVo, "Customer successfully edited");
-    }
-
-    //To be completed
     @DeleteMapping
-    public CommonResult<CustomerVo> deleteCustomer(@RequestParam Long customerId) {
+    public ResponseEntity<CommonResult<Long>> deleteCustomer(@RequestParam Long customerId) {
+        Customer customer = customerService.findById(customerId);
+        if(customer == null) {
+            CommonResult<Long> res = CommonResult.fail("Customer does not exist");
+            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+        }
+        Set<Order> customerOrders = customer.getOrder();
+        //since orders have a foreign key relation to customer, we need to make sure to delete all orders referring to this customer first
+        for(Order order: customerOrders) {
+            orderService.deleteOrder(order.getOrderId());
+        }
+        Customer deletedCustomer = customerService.deleteById(customerId);
         CustomerVo customerVo = new CustomerVo();
-        CommonResult<CustomerVo> res =  CommonResult.success(customerVo, "Customer successfully deleted");
-        return res;
+        CommonResult<Long> res =  CommonResult.success(customerId, "Customer successfully deleted");
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @GetMapping
+    @RequestMapping("/orders")
+    public ResponseEntity<CommonResult<Set<Order>>> getOrders(@RequestParam Long customerId) {
+        Customer customer = customerService.findById(customerId);
+        if(customer == null) {
+            CommonResult<Set<Order>> res = CommonResult.fail("Customer does not exist");
+            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+        }
+        Set<Order> customerOrders = customer.getOrder();
+        CommonResult<Set<Order>> res =  CommonResult.success(customerOrders, "Orders successfully retrieved");
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 }

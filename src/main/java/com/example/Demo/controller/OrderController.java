@@ -44,6 +44,7 @@ public class OrderController {
     public CommonResult<OrderVo> deleteOrder(@RequestParam Long orderId) {
         OrderVo orderVo = new OrderVo();
         Order deletedOrder = orderService.deleteOrder(orderId);
+        BeanUtils.copyProperties(deletedOrder, orderVo);
         orderVo.setCustomerId(deletedOrder.getCustomerId().getCustomerId());
         orderVo.setProductId(deletedOrder.getProductId().getProductId());
         return CommonResult.success(orderVo, "Order deleted");

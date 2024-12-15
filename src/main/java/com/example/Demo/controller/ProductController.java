@@ -5,8 +5,10 @@ import java.util.List;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,7 +43,7 @@ public class ProductController {
 
     @GetMapping
     @RequestMapping("/all")
-    public CommonResult<List<ProductVo>> getAllProducts() {
+    public ResponseEntity<CommonResult<List<ProductVo>>> getAllProducts() {
         List<Product> lst = productService.listAllProducts();
         List<ProductVo> res = new ArrayList<>();
         for(Product p: lst) {
@@ -49,19 +51,30 @@ public class ProductController {
             BeanUtils.copyProperties(p, productVo);
             res.add(productVo);
         }
-        return CommonResult.success(res, "Successfully retrieved all products");
+        CommonResult<List<ProductVo>> result = CommonResult.success(res, "Successfully retrieved all products");
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @PostMapping
-    public CommonResult<ProductVo> addProduct(@RequestBody ProductDto productDto) {
+    public ResponseEntity<CommonResult<ProductVo>> addProduct(@RequestBody ProductDto productDto) {
         Product newProduct = new Product();
         BeanUtils.copyProperties(productDto, newProduct);
-        System.out.println(newProduct);
         Product product = productService.saveProduct(newProduct);
         ProductVo productVo = new ProductVo();
         BeanUtils.copyProperties(product, productVo);
-        return CommonResult.success(productVo, "Product successfully added");
+        CommonResult<ProductVo> res = CommonResult.success(productVo, "Product successfully added");
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
 
+    //to be added
+    @DeleteMapping
+    public CommonResult<ProductVo> deleteProduct(@RequestParam Long productId) {
+        ProductVo productVo = new ProductVo();
+        //Before we delete, we need to make sure that we delete all orders referencing this productId
+        Product deletedProduct = productService.deleteById(productId);
+        BeanUtils.copyProperties(deletedProduct, productVo);
+        CommonResult<ProductVo> res = CommonResult.success(productVo, "Product successfully deleted");
+        return res;
     }
 
 }
