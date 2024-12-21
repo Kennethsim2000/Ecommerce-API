@@ -31,10 +31,6 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<CommonResult<ProductVo>> getProduct(@RequestParam Long productId) {
         Product product = productService.findById(productId);
-        if(product == null) {
-            CommonResult<ProductVo> res = CommonResult.fail("Product not found");
-            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
-        }
         ProductVo productVo = new ProductVo();
         BeanUtils.copyProperties(product, productVo);
         CommonResult<ProductVo> res =  CommonResult.success(productVo, "Product successfully found");

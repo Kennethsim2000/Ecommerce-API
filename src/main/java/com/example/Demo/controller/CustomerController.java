@@ -1,6 +1,7 @@
 package com.example.Demo.controller;
 
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.springframework.beans.BeanUtils;
@@ -8,16 +9,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.Demo.config.CommonResult;
 import com.example.Demo.dto.CustomerDto;
+import com.example.Demo.exception.CustomerNotFoundException;
 import com.example.Demo.model.Customer;
 import com.example.Demo.model.Order;
 import com.example.Demo.service.CustomerService;
@@ -37,10 +41,6 @@ public class CustomerController {
     @GetMapping
     public ResponseEntity<CommonResult<CustomerVo>> getCustomer(@RequestParam Long customerId) {
         Customer customer = customerService.findById(customerId);
-        if(customer == null) {
-            CommonResult<CustomerVo> res = CommonResult.fail("Customer does not exist");
-            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
-        }
         CustomerVo customerVo = new CustomerVo();
         BeanUtils.copyProperties(customer, customerVo);
         Set<Order> orders = customer.getOrder();
@@ -67,10 +67,6 @@ public class CustomerController {
     @DeleteMapping
     public ResponseEntity<CommonResult<Long>> deleteCustomer(@RequestParam Long customerId) {
         Customer customer = customerService.findById(customerId);
-        if(customer == null) {
-            CommonResult<Long> res = CommonResult.fail("Customer does not exist");
-            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
-        }
         Set<Order> customerOrders = customer.getOrder();
         //since orders have a foreign key relation to customer, we need to make sure to delete all orders referring to this customer first
         for(Order order: customerOrders) {
@@ -86,12 +82,10 @@ public class CustomerController {
     @RequestMapping("/orders")
     public ResponseEntity<CommonResult<Set<Order>>> getOrders(@RequestParam Long customerId) {
         Customer customer = customerService.findById(customerId);
-        if(customer == null) {
-            CommonResult<Set<Order>> res = CommonResult.fail("Customer does not exist");
-            return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
-        }
         Set<Order> customerOrders = customer.getOrder();
         CommonResult<Set<Order>> res =  CommonResult.success(customerOrders, "Orders successfully retrieved");
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
+
+
 }
